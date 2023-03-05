@@ -47,30 +47,29 @@ func (s *slotMachine) GetReels() []int {
 }
 
 func (s *slotMachine) GetReelsPositions() []int {
-	return lo.Map(lo.Zip2(s.reels, s.spins), func(v lo.Tuple2[int, int], _ int) int {
-		if v.A != v.B && math.Min(float64(v.A), float64(v.B)) > 0 {
-			return int(math.Max(float64(v.A), float64(v.B))) %
-				int(math.Min(float64(v.A), float64(v.B)))
-		}
+	return lo.Map(
+		lo.Zip2(s.reels, s.spins),
+		func(v lo.Tuple2[int, int], _ int) int {
+			if v.A != v.B && math.Min(float64(v.A), float64(v.B)) > 0 {
+				return int(math.Max(float64(v.A), float64(v.B))) %
+					int(math.Min(float64(v.A), float64(v.B)))
+			}
 
-		return 0
-	})
+			return 0
+		})
 }
 
 func (s *slotMachine) GetLineReelPositions(line []int) []int {
 	return lo.Map(
-		lo.Zip3(
-			lo.Map(s.variation.Reels, func(_ []int, index int) int {
-				return index
-			}),
+		lo.Zip2(
 			s.GetReelsPositions(),
 			line,
-		), func(v lo.Tuple3[int, int, int], _ int) int {
-			reelSymbolsCount := len(s.variation.Reels[v.A])
-			returnValue := v.B + v.C
+		), func(v lo.Tuple2[int, int], index int) int {
+			reelSymbolsCount := len(s.variation.Reels[index])
+			returnValue := v.A + v.B
 
 			if returnValue > reelSymbolsCount-1 {
-				return v.B + v.C - reelSymbolsCount
+				return returnValue - reelSymbolsCount
 			}
 
 			return returnValue
@@ -81,12 +80,7 @@ func (s *slotMachine) GetLineSymbolIndexes(line []int) []int {
 	lineReelPositions := s.GetLineReelPositions(line)
 
 	return lo.Map(
-		lo.Zip2(
-			lo.Map(lineReelPositions, func(_ int, index int) int {
-				return index
-			}),
-			lineReelPositions,
-		), func(v lo.Tuple2[int, int], _ int) int {
-			return s.variation.Reels[v.A][v.B]
+		lineReelPositions, func(v int, index int) int {
+			return s.variation.Reels[index][v]
 		})
 }
