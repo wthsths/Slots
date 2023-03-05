@@ -2,6 +2,7 @@ package slots
 
 import (
 	"encoding/json"
+	"errors"
 	"io/ioutil"
 )
 
@@ -17,24 +18,33 @@ type symbol struct {
 	Payouts []float64 `json:"payouts"`
 }
 
+var (
+	errReadingConfigFile = errors.New("error reading config file")
+	errInvalidJson       = errors.New("invalid json")
+)
+
+// NewVariationFromConfig reading file and returns variation struct.
 func NewVariationFromConfig(file string) (*Variation, error) {
 	b, err := ioutil.ReadFile(file)
 	if err != nil {
-		return nil, err
+		return nil, errReadingConfigFile
 	}
 
 	variation := &Variation{}
 	err = json.Unmarshal([]byte(b), &variation)
 	if err != nil {
-		return nil, err
+		return nil, errInvalidJson
 	}
 
 	return variation, nil
 }
 
+// NewVariationFromString creating variation struct from string.
 func NewVariationFromString(s string) (*Variation, error) {
 	variation := &Variation{}
-	_ = json.Unmarshal([]byte(s), &variation)
+	if err := json.Unmarshal([]byte(s), &variation); err != nil {
+		return nil, errInvalidJson
+	}
 
 	return variation, nil
 }
