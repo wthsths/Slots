@@ -8,61 +8,61 @@ import (
 )
 
 func TestPlay(t *testing.T) {
-	var variation string = `
-	{
-		"slug": "fruits",
-		"symbols": [
-			{ "payouts": [0, 0, 5, 10, 25], "slug": "cherry" },
-			{ "payouts": [0, 0, 5, 10, 25], "slug": "strawberry" },
-			{ "payouts": [0, 0, 5, 10, 25], "slug": "lemon" },
-			{ "payouts": [0, 0, 5, 10, 25], "slug": "orange" },
-			{ "payouts": [0, 0, 10, 25, 50], "slug": "plum" },
-			{ "payouts": [0, 0, 10, 25, 50], "slug": "grapes" },
-			{ "payouts": [0, 0, 50, 100, 250], "slug": "bell" },
-			{ "payouts": [0, 0, 50, 100, 250], "slug": "watermelon" },
-			{ "payouts": [0, 0, 100, 250, 500], "slug": "seven" }
-		],
-		"reels": [
-			[0, 1, 2, 3, 4, 5, 6, 7],
-			[1, 2, 3, 4, 5, 6, 7, 0],
-			[2, 3, 4, 5, 6, 7, 0, 1],
-			[3, 4, 5, 6, 7, 0, 1, 2],
-			[4, 5, 6, 7, 0, 1, 2, 3]
-		],
-		"lines": [
-			[1, 1, 1, 1, 1],
-			[0, 0, 0, 0, 0],
-			[2, 2, 2, 2, 2],
-			[1, 1, 0, 1, 2],
-			[1, 1, 2, 1, 0],
-			[1, 0, 1, 2, 1],
-			[1, 0, 1, 2, 2],
-			[1, 0, 0, 1, 2],
-			[1, 2, 1, 0, 1],
-			[1, 2, 2, 1, 0],
-			[1, 2, 1, 0, 0],
-			[0, 1, 2, 1, 0],
-			[0, 1, 1, 1, 2],
-			[0, 0, 1, 2, 2],
-			[0, 0, 1, 2, 1],
-			[0, 0, 0, 1, 2],
-			[2, 1, 0, 1, 2],
-			[2, 1, 1, 1, 0],
-			[2, 2, 1, 0, 0],
-			[2, 2, 1, 0, 1]
-		]
+	tests := []struct {
+		name          string
+		variation     *Variation
+		randomizer    random.Random
+		bet           float64
+		lines         int
+		wantWinAmount float64
+		wantWinLines  []int
+		wantErr       error
+	}{
+		{
+			name:          "should win 50 from line 0",
+			variation:     getTestVariation(),
+			randomizer:    random.NewFakeRandom(0),
+			bet:           1,
+			lines:         1,
+			wantWinAmount: 50,
+			wantWinLines:  []int{0},
+		},
 	}
-	`
 
-	v, _ := NewVariationFromString(variation)
-	r := random.NewFakeRandom(-1)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			g, _ := NewGame(tt.variation, tt.randomizer, tt.bet, tt.lines)
+			err := g.Play()
+			assert.Equal(t, tt.wantErr, err)
+			assert.Equal(t, tt.wantWinAmount, g.GetWinAmount())
+			assert.Equal(t, tt.wantWinLines, g.GetWinLines())
+		})
+	}
+}
 
-	g, err := NewGame(v, r, 1, 20)
-	assert.NoError(t, err)
-	assert.NotNil(t, g)
-
-	err = g.Play()
-	assert.NoError(t, err)
-	assert.Equal(t, float64(5), g.GetWinAmount())
-	assert.Equal(t, []int{16}, g.GetWinLines())
+func getTestVariation() *Variation {
+	// test variation
+	// one	one	 one  one  one
+	// two  two  two  two  two
+	// thr  thr  thr  thr  thr
+	return &Variation{
+		Slug: "test_game",
+		Symbols: []symbol{
+			{Payouts: []float64{0, 0, 0, 0, 20}, Slug: "one"},
+			{Payouts: []float64{0, 0, 0, 0, 50}, Slug: "two"},
+			{Payouts: []float64{0, 0, 0, 0, 100}, Slug: "thr"},
+		},
+		Reels: [][]int{
+			{0, 1, 2},
+			{0, 1, 2},
+			{0, 1, 2},
+			{0, 1, 2},
+			{0, 1, 2},
+		},
+		Lines: [][]int{
+			{1, 1, 1, 1, 1},
+			{0, 0, 0, 0, 0},
+			{2, 2, 2, 2, 2},
+		},
+	}
 }
