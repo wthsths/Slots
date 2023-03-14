@@ -27,6 +27,32 @@ func TestPlay(t *testing.T) {
 			wantWinAmount: 50,
 			wantWinLines:  []int{0},
 		},
+		{
+			name: "should win 50 with wild from line 0",
+			variation: &Variation{
+				Symbols: []symbol{
+					{Payouts: []float64{0, 0, 0, 0, 0}},
+					{Payouts: []float64{0, 0, 0, 0, 50}},
+					{Payouts: []float64{0, 0, 0, 0, 0}},
+					{Payouts: []float64{0, 0, 0, 0, 0}, Wild: true},
+				},
+				Reels: [][]int{
+					{0, 1, 2},
+					{0, 3, 2},
+					{0, 3, 2},
+					{0, 3, 2},
+					{0, 3, 2},
+				},
+				Lines: [][]int{
+					{1, 1, 1, 1, 1},
+				},
+			},
+			randomizer:    random.NewFakeRandom(0),
+			bet:           1,
+			lines:         1,
+			wantWinAmount: 50,
+			wantWinLines:  []int{0},
+		},
 	}
 
 	for _, tt := range tests {

@@ -8,7 +8,7 @@ Simple slots game library for warming up.
 
 [ ] Scatter symbol (multiplier)
 
-[ ] Wild symbol
+[x] Wild symbol
 
 [ ] Bonus games?
 

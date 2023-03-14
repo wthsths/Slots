@@ -16,6 +16,7 @@ type Variation struct {
 type symbol struct {
 	Slug    string    `json:"slug"`
 	Payouts []float64 `json:"payouts"`
+	Wild    bool      `json:"wild"`
 }
 
 var (

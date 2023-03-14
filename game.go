@@ -35,7 +35,7 @@ func (g *Game) Play() error {
 			symbolMatchesCount := 1
 
 			for _, symbolIndex := range lineSymbolIndexes[1:] {
-				if firstSymbolIndex == symbolIndex {
+				if firstSymbolIndex == symbolIndex || g.variation.Symbols[symbolIndex].Wild {
 					symbolMatchesCount++
 				}
 			}
