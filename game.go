@@ -24,33 +24,46 @@ func NewGame(variation *Variation, rand random.Random, bet float64, lines int) (
 
 func (g *Game) Play() error {
 	slotMachine, _ := NewSlotMachine(g.variation, g.rand)
-
 	slotMachine.Spin()
 
-	for index, value := range g.variation.Lines {
-		if index < g.lines {
-			lineSymbolIndexes := slotMachine.GetLineSymbolIndexes(value)
-
-			firstSymbolIndex := lineSymbolIndexes[0]
-			symbolMatchesCount := 1
-
-			for _, symbolIndex := range lineSymbolIndexes[1:] {
-				if firstSymbolIndex == symbolIndex || g.variation.Symbols[symbolIndex].Wild {
-					symbolMatchesCount++
-				}
-			}
-
-			lineWinAmount := g.variation.Symbols[firstSymbolIndex].Payouts[symbolMatchesCount-1]
-
-			if lineWinAmount > 0 {
-				g.winLines = append(g.winLines, index)
-			}
-
-			g.winAmount += lineWinAmount
+	for lineIndex, line := range g.variation.Lines {
+		if lineIndex >= g.lines {
+			break
 		}
+
+		lineWinAmount := g.calculateLineWinAmount(slotMachine, line)
+		if lineWinAmount > 0 {
+			g.winLines = append(g.winLines, lineIndex)
+		}
+		g.winAmount += lineWinAmount
 	}
 
 	return nil
+}
+
+func (g *Game) calculateLineWinAmount(slotMachine *slotMachine, line []int) float64 {
+	lineSymbolIndexes := slotMachine.GetLineSymbolIndexes(line)
+	firstSymbolIndex := lineSymbolIndexes[0]
+	symbolMatchesCount := g.countSymbolMatches(lineSymbolIndexes)
+
+	return g.variation.Symbols[firstSymbolIndex].Payouts[symbolMatchesCount-1]
+}
+
+func (g *Game) countSymbolMatches(lineSymbolIndexes []int) int {
+	firstSymbolIndex := lineSymbolIndexes[0]
+	symbolMatchesCount := 1
+
+	for _, symbolIndex := range lineSymbolIndexes[1:] {
+		if g.isMatchingSymbol(firstSymbolIndex, symbolIndex) {
+			symbolMatchesCount++
+		}
+	}
+
+	return symbolMatchesCount
+}
+
+func (g *Game) isMatchingSymbol(firstSymbolIndex, symbolIndex int) bool {
+	return firstSymbolIndex == symbolIndex || g.variation.Symbols[symbolIndex].Wild
 }
 
 func (g *Game) GetWinAmount() float64 {
