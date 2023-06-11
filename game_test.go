@@ -9,23 +9,31 @@ import (
 
 func TestPlay(t *testing.T) {
 	tests := []struct {
-		name          string
-		variation     *Variation
-		randomizer    random.Random
-		bet           float64
-		lines         int
-		wantWinAmount float64
-		wantWinLines  []int
-		wantErr       error
+		name       string
+		variation  *Variation
+		randomizer random.Random
+		bet        float64
+		lines      int
+		want       Result
+		wantErr    error
 	}{
 		{
-			name:          "should win 50 from line 0",
-			variation:     getTestVariation(),
-			randomizer:    random.NewFakeRandom(0),
-			bet:           1,
-			lines:         1,
-			wantWinAmount: 50,
-			wantWinLines:  []int{0},
+			name:       "should win 50 from line 0",
+			variation:  getTestVariation(),
+			randomizer: random.NewFakeRandom(0),
+			bet:        1,
+			lines:      1,
+			want: Result{
+				Spins: []int{999, 999, 999, 999, 999},
+				WinLines: []ResultWinLines{
+					{
+						LineIndex:          0,
+						WinAmount:          50,
+						SymbolMatchesCount: 5,
+					},
+				},
+				TotalWinAmount: 50,
+			},
 		},
 		{
 			name: "should win 50 with wild from line 0",
@@ -47,21 +55,29 @@ func TestPlay(t *testing.T) {
 					{1, 1, 1, 1, 1},
 				},
 			},
-			randomizer:    random.NewFakeRandom(0),
-			bet:           1,
-			lines:         1,
-			wantWinAmount: 50,
-			wantWinLines:  []int{0},
+			randomizer: random.NewFakeRandom(0),
+			bet:        1,
+			lines:      1,
+			want: Result{
+				Spins: []int{999, 999, 999, 999, 999},
+				WinLines: []ResultWinLines{
+					{
+						LineIndex:          0,
+						WinAmount:          50,
+						SymbolMatchesCount: 5,
+					},
+				},
+				TotalWinAmount: 50,
+			},
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			g, _ := NewGame(tt.variation, tt.randomizer, tt.bet, tt.lines)
-			err := g.Play()
-			assert.Equal(t, tt.wantErr, err)
-			assert.Equal(t, tt.wantWinAmount, g.GetWinAmount())
-			assert.Equal(t, tt.wantWinLines, g.GetWinLines())
+			got, gotErr := g.Play()
+			assert.Equal(t, tt.want, got)
+			assert.Equal(t, tt.wantErr, gotErr)
 		})
 	}
 }

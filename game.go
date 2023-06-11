@@ -9,8 +9,6 @@ type Game struct {
 	rand      random.Random
 	bet       float64
 	lines     int
-	winAmount float64
-	winLines  []int
 }
 
 func NewGame(variation *Variation, rand random.Random, bet float64, lines int) (*Game, error) {
@@ -22,31 +20,42 @@ func NewGame(variation *Variation, rand random.Random, bet float64, lines int) (
 	}, nil
 }
 
-func (g *Game) Play() error {
-	slotMachine, _ := NewSlotMachine(g.variation, g.rand)
-	slotMachine.Spin()
+func (g *Game) Play() (Result, error) {
+	result := Result{}
+
+	slotMachine, err := NewSlotMachine(g.variation, g.rand)
+	if err != nil {
+		return result, err
+	}
+
+	result.Spins = slotMachine.Spin()
 
 	for lineIndex, line := range g.variation.Lines {
 		if lineIndex >= g.lines {
 			break
 		}
 
-		lineWinAmount := g.calculateLineWinAmount(slotMachine, line)
+		lineWinAmount, symbolMatchesCount := g.calculateLineWinAmount(slotMachine, line)
 		if lineWinAmount > 0 {
-			g.winLines = append(g.winLines, lineIndex)
+			resultWinLine := ResultWinLines{}
+			resultWinLine.LineIndex = lineIndex
+			resultWinLine.WinAmount = lineWinAmount
+			resultWinLine.SymbolMatchesCount = symbolMatchesCount
+
+			result.WinLines = append(result.WinLines, resultWinLine)
 		}
-		g.winAmount += lineWinAmount
+		result.TotalWinAmount += lineWinAmount
 	}
 
-	return nil
+	return result, nil
 }
 
-func (g *Game) calculateLineWinAmount(slotMachine *slotMachine, line []int) float64 {
+func (g *Game) calculateLineWinAmount(slotMachine *slotMachine, line []int) (float64, int) {
 	lineSymbolIndexes := slotMachine.GetLineSymbolIndexes(line)
 	firstSymbolIndex := lineSymbolIndexes[0]
 	symbolMatchesCount := g.countSymbolMatches(lineSymbolIndexes)
 
-	return g.variation.Symbols[firstSymbolIndex].Payouts[symbolMatchesCount-1]
+	return g.variation.Symbols[firstSymbolIndex].Payouts[symbolMatchesCount-1], symbolMatchesCount
 }
 
 func (g *Game) countSymbolMatches(lineSymbolIndexes []int) int {
@@ -64,12 +73,4 @@ func (g *Game) countSymbolMatches(lineSymbolIndexes []int) int {
 
 func (g *Game) isMatchingSymbol(firstSymbolIndex, symbolIndex int) bool {
 	return firstSymbolIndex == symbolIndex || g.variation.Symbols[symbolIndex].Wild
-}
-
-func (g *Game) GetWinAmount() float64 {
-	return g.winAmount
-}
-
-func (g *Game) GetWinLines() []int {
-	return g.winLines
 }

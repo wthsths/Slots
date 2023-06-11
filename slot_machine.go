@@ -31,10 +31,12 @@ func NewSlotMachine(variation *Variation, rand random.Random) (*slotMachine, err
 	return s, nil
 }
 
-func (s *slotMachine) Spin() {
+func (s *slotMachine) Spin() []int {
 	for i := range s.spins {
 		s.spins[i] = s.rand.Intn(MAX_SPIN-MIN_SPIN) + MIN_SPIN
 	}
+
+	return s.spins
 }
 
 func (s *slotMachine) GetSpins() []int {

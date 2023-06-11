@@ -15,10 +15,10 @@ func main() {
 		log.Fatal(err)
 	}
 
-	if err := game.Play(); err != nil {
+	result, err := game.Play()
+	if err != nil {
 		log.Fatal(err)
 	}
 
-	log.Printf("Win Amount: %v\n", game.GetWinAmount())
-	log.Printf("Win Lines: %v\n", game.GetWinLines())
+	log.Printf("Game Result: %+v\n", result)
 }
