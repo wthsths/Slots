@@ -3,7 +3,6 @@ package slots
 import (
 	"math"
 
-	"github.com/samber/lo"
 	"github.com/wthsths/slots/pkg/random"
 )
 
@@ -25,17 +24,17 @@ func NewSlotMachine(variation *Variation, rand random.Random) (*slotMachine, err
 		spins:     []int{0, 0, 0, 0, 0},
 	}
 
-	s.reels = lo.Map(variation.Reels, func(r []int, _ int) int {
-		return len(r)
-	})
+	for i := range variation.Reels {
+		s.reels[i] = len(variation.Reels[i])
+	}
 
 	return s, nil
 }
 
 func (s *slotMachine) Spin() {
-	s.spins = lo.Map(s.spins, func(v int, _ int) int {
-		return s.rand.Intn(MAX_SPIN-MIN_SPIN) + MIN_SPIN
-	})
+	for i := range s.spins {
+		s.spins[i] = s.rand.Intn(MAX_SPIN-MIN_SPIN) + MIN_SPIN
+	}
 }
 
 func (s *slotMachine) GetSpins() []int {
@@ -47,40 +46,46 @@ func (s *slotMachine) GetReels() []int {
 }
 
 func (s *slotMachine) GetReelsPositions() []int {
-	return lo.Map(
-		lo.Zip2(s.reels, s.spins),
-		func(v lo.Tuple2[int, int], _ int) int {
-			if v.A != v.B && math.Min(float64(v.A), float64(v.B)) > 0 {
-				return int(math.Max(float64(v.A), float64(v.B))) %
-					int(math.Min(float64(v.A), float64(v.B)))
-			}
+	positions := make([]int, len(s.reels))
 
-			return 0
-		})
+	for i := range s.reels {
+		v := s.reels[i]
+		spin := s.spins[i]
+
+		if v != spin && float64(v) > 0 && float64(spin) > 0 {
+			positions[i] = int(math.Max(float64(v), float64(spin))) % int(math.Min(float64(v), float64(spin)))
+		} else {
+			positions[i] = 0
+		}
+	}
+
+	return positions
 }
 
 func (s *slotMachine) GetLineReelPositions(line []int) []int {
-	return lo.Map(
-		lo.Zip2(
-			s.GetReelsPositions(),
-			line,
-		), func(v lo.Tuple2[int, int], index int) int {
-			reelSymbolsCount := len(s.variation.Reels[index])
-			returnValue := v.A + v.B
+	positions := make([]int, len(s.reels))
 
-			if returnValue > reelSymbolsCount-1 {
-				return returnValue - reelSymbolsCount
-			}
+	for i, reelIndex := range line {
+		reelSymbolsCount := len(s.variation.Reels[i])
+		returnValue := s.GetReelsPositions()[i] + reelIndex
 
-			return returnValue
-		})
+		if returnValue > reelSymbolsCount-1 {
+			positions[i] = returnValue - reelSymbolsCount
+		} else {
+			positions[i] = returnValue
+		}
+	}
+
+	return positions
 }
 
 func (s *slotMachine) GetLineSymbolIndexes(line []int) []int {
 	lineReelPositions := s.GetLineReelPositions(line)
+	symbolIndexes := make([]int, len(lineReelPositions))
 
-	return lo.Map(
-		lineReelPositions, func(v int, index int) int {
-			return s.variation.Reels[index][v]
-		})
+	for i, pos := range lineReelPositions {
+		symbolIndexes[i] = s.variation.Reels[i][pos]
+	}
+
+	return symbolIndexes
 }
