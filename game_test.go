@@ -24,7 +24,10 @@ func TestPlay(t *testing.T) {
 			bet:        1,
 			lines:      1,
 			want: Result{
-				Spins: []int{999, 999, 999, 999, 999},
+				Bet:      1,
+				Lines:    1,
+				LastSpin: []int{0, 0, 0, 0, 0},
+				Spins:    []int{999, 999, 999, 999, 999},
 				WinLines: []ResultWinLines{
 					{
 						LineIndex:          0,
@@ -59,7 +62,10 @@ func TestPlay(t *testing.T) {
 			bet:        1,
 			lines:      1,
 			want: Result{
-				Spins: []int{999, 999, 999, 999, 999},
+				Bet:      1,
+				Lines:    1,
+				LastSpin: []int{0, 0, 0, 0, 0},
+				Spins:    []int{999, 999, 999, 999, 999},
 				WinLines: []ResultWinLines{
 					{
 						LineIndex:          0,
@@ -74,8 +80,8 @@ func TestPlay(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			g, _ := NewGame(tt.variation, tt.randomizer, tt.bet, tt.lines)
-			got, gotErr := g.Play()
+			g, _ := NewGame(tt.variation, tt.randomizer)
+			got, gotErr := g.Play(tt.bet, tt.lines)
 			assert.Equal(t, tt.want, got)
 			assert.Equal(t, tt.wantErr, gotErr)
 		})

@@ -1,41 +1,45 @@
 package slots
 
 import (
+	"sync"
+
 	"github.com/wthsths/slots/pkg/random"
 )
 
 type Game struct {
-	variation *Variation
-	rand      random.Random
-	bet       float64
-	lines     int
+	sync.RWMutex
+	slotMachine *slotMachine
+	variation   *Variation
 }
 
-func NewGame(variation *Variation, rand random.Random, bet float64, lines int) (*Game, error) {
+func NewGame(variation *Variation, rand random.Random) (*Game, error) {
+	slotMachine, err := NewSlotMachine(variation, rand)
+	if err != nil {
+		return nil, err
+	}
+
 	return &Game{
-		variation: variation,
-		rand:      rand,
-		bet:       bet,
-		lines:     lines,
+		slotMachine: slotMachine,
+		variation:   variation,
 	}, nil
 }
 
-func (g *Game) Play() (Result, error) {
+func (g *Game) Play(bet float64, lines int) (Result, error) {
+	g.Lock()
+	defer g.Unlock()
+
 	result := Result{}
-
-	slotMachine, err := NewSlotMachine(g.variation, g.rand)
-	if err != nil {
-		return result, err
-	}
-
-	result.Spins = slotMachine.Spin()
+	result.Bet = bet
+	result.Lines = lines
+	result.LastSpin = g.slotMachine.GetLastSpins()
+	result.Spins = g.slotMachine.Spin()
 
 	for lineIndex, line := range g.variation.Lines {
-		if lineIndex >= g.lines {
+		if lineIndex >= lines {
 			break
 		}
 
-		lineWinAmount, symbolMatchesCount := g.calculateLineWinAmount(slotMachine, line)
+		lineWinAmount, symbolMatchesCount := g.calculateLineWinAmount(g.slotMachine, line)
 		if lineWinAmount > 0 {
 			resultWinLine := ResultWinLines{}
 			resultWinLine.LineIndex = lineIndex
@@ -44,7 +48,7 @@ func (g *Game) Play() (Result, error) {
 
 			result.WinLines = append(result.WinLines, resultWinLine)
 		}
-		result.TotalWinAmount += lineWinAmount
+		result.TotalWinAmount += lineWinAmount * bet
 	}
 
 	return result, nil

@@ -9,13 +9,17 @@ import (
 
 func main() {
 	rand := random.NewSimpleRandom()
-	variation, _ := slots.NewVariationFromConfig("../variations/fruits.json")
-	game, err := slots.NewGame(variation, rand, 100, 20)
+	variation, err := slots.NewVariationFromConfig("./fruits.json")
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	result, err := game.Play()
+	game, err := slots.NewGame(variation, rand)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	result, err := game.Play(100, 20)
 	if err != nil {
 		log.Fatal(err)
 	}

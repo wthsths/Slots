@@ -14,6 +14,7 @@ type slotMachine struct {
 	rand      random.Random
 	reels     []int
 	spins     []int
+	lastSpins []int
 }
 
 func NewSlotMachine(variation *Variation, rand random.Random) (*slotMachine, error) {
@@ -22,6 +23,7 @@ func NewSlotMachine(variation *Variation, rand random.Random) (*slotMachine, err
 		rand:      rand,
 		reels:     []int{0, 0, 0, 0, 0},
 		spins:     []int{0, 0, 0, 0, 0},
+		lastSpins: []int{0, 0, 0, 0, 0},
 	}
 
 	for i := range variation.Reels {
@@ -31,20 +33,26 @@ func NewSlotMachine(variation *Variation, rand random.Random) (*slotMachine, err
 	return s, nil
 }
 
+func (s *slotMachine) GetSpins() []int {
+	return s.spins
+}
+
+func (s *slotMachine) GetLastSpins() []int {
+	return s.lastSpins
+}
+
+func (s *slotMachine) GetReels() []int {
+	return s.reels
+}
+
 func (s *slotMachine) Spin() []int {
+	copy(s.spins, s.lastSpins)
+
 	for i := range s.spins {
 		s.spins[i] = s.rand.Intn(MAX_SPIN-MIN_SPIN) + MIN_SPIN
 	}
 
 	return s.spins
-}
-
-func (s *slotMachine) GetSpins() []int {
-	return s.spins
-}
-
-func (s *slotMachine) GetReels() []int {
-	return s.reels
 }
 
 func (s *slotMachine) GetReelsPositions() []int {
